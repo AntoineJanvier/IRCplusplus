@@ -1,28 +1,30 @@
+#include "src/ServerSocket.h"
+#include "src/SocketException.h"
+#include <string>
 #include <iostream>
-#include "src/Room.h"
-
-#define SERVER_PORT 4896
 
 using namespace std;
 
-int main() {
-    cout << "Server started at port " << SERVER_PORT << "..." << endl << endl;
+int main ( int argc, int argv[] ) {
+    cout << "running..." << endl;
 
-    int cpt = 0;
-    Room room1 = Room(++cpt, "General");
-
-    auto *u = static_cast<User *>(malloc(sizeof(User)));
-    u->id = 1;
-    u->name = "Toto";
-
-    auto *u2 = static_cast<User *>(malloc(sizeof(User)));
-    u2->id = 2;
-    u2->name = "Titi";
-
-    room1.addUser(u);
-    room1.addUser(u2);
-
-    room1.removeUser(u->id);
-
+    try {
+        // Create the socket
+        ServerSocket server ( 30000 );
+        while (true) {
+            ServerSocket new_sock;
+            server.accept ( new_sock );
+            try {
+                while (true) {
+                    string data;
+                    new_sock >> data;
+                    new_sock << data;
+                }
+            } catch ( SocketException& ) {}
+        }
+    }
+    catch (SocketException& e) {
+        cout << "Exception was caught: " << e.description() << endl << "Exiting." << endl;
+    }
     return 0;
 }

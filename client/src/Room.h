@@ -6,7 +6,8 @@
 #define CLIENT_ROOM_H
 
 #include <iostream>
-#include <utility>
+#include <cstdlib>
+#include <cstdio>
 #include "User.h"
 
 using namespace std;
@@ -47,10 +48,10 @@ class Room {
         Room(int id, const string &name) {
             this->id = id;
             this->name = move(name);
-            this->userlist = static_cast<User *>(malloc(sizeof(User)));
+            this->userlist = nullptr;
             cout << "Room #" << this->id << " : \"" << this->name << "\" created." << endl;
         }
-        ~Room() = default {
+        ~Room() {
             while (this->userlist != nullptr) {
                 User *nn = this->userlist->next;
                 free(this->userlist);
