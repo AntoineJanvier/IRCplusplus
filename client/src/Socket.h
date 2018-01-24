@@ -1,11 +1,5 @@
-//
-// Created by antoine on 08/01/18.
-//
-
 #ifndef CLIENT_SOCKER_H
 #define CLIENT_SOCKER_H
-
-
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -16,7 +10,6 @@
 #include <arpa/inet.h>
 
 using namespace std;
-
 
 const int MAXHOSTNAME = 200;
 const int MAXCONNECTIONS = 5;
