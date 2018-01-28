@@ -1,15 +1,18 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
-#include<sys/socket.h>
-#include<arpa/inet.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 #include <zconf.h>
 
+//#include "User.hpp"
+
 int main(int argc , char *argv[]) {
+
     int sock;
     struct sockaddr_in server;
 
-    char message[1000], server_reply[2000];
+    char username[100], message[1000], final_message[1102], server_reply[2204];
 
     char * server_address = "127.0.0.1";
     uint16_t server_port = 8890;
@@ -26,6 +29,11 @@ int main(int argc , char *argv[]) {
     server.sin_port = htons(server_port);
     server.sin_family = AF_INET;
 
+    printf("Username : ");
+    scanf("%s", username);
+
+    //User usr(username);
+
     if (connect(sock, (struct sockaddr *)&server, sizeof(server)) < 0) {
         perror("connect failed. Error");
         return 1;
@@ -36,7 +44,11 @@ int main(int argc , char *argv[]) {
     while(1) {
         printf("Send message : ");
         scanf("%s", message);
-        if(send(sock, message, strlen(message), 0) < 0) {
+        strcat(final_message, username);
+        strcat(final_message, " : ");
+        strcat(final_message, message);
+        strcat(final_message, "\n");
+        if(send(sock, final_message, strlen(final_message), 0) < 0) {
             puts("Send failed");
             return 1;
         }
