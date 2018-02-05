@@ -23,20 +23,20 @@ int main(int argc , char *argv[]) {
         return 1;
     }
     listen(socket_desc , 3);
-    puts("Listening...");
+    puts("Listening on 8890...");
     c = sizeof(struct sockaddr_in);
 
+    initSocketArray();
     while ((client_sock = accept(socket_desc, (struct sockaddr *)&client, (socklen_t*)&c))) {
         puts("Connection accepted ! ");
-        initSocketArray();
         pthread_t sniffer_thread;
         new_sock = malloc(1);
         *new_sock = client_sock;
+        sockets[counter++] = client_sock;
         if (pthread_create(&sniffer_thread, NULL, connection_handler, (void*) new_sock) < 0) {
             perror("could not create thread");
             return 1;
         }
-        sockets[counter++] = *new_sock;
     }
     if (client_sock < 0) {
         perror("accept failed");
@@ -48,15 +48,22 @@ int main(int argc , char *argv[]) {
 void *connection_handler(void *socket_desc) {
     int sock = *(int*) socket_desc; // Socket descriptor
     ssize_t read_size;
-    char *message = "", client_message[2000];
-    write(sock, message, strlen(message));
-    while((read_size = recv(sock, client_message, 2000, 0)) > 0)
-        for (int i = 0; i <= counter; i++) write(sockets[i], client_message , strlen(client_message));
+    char client_message[1024];
+
+    int i;
+    while((read_size = recv(sock, client_message, 1024, 0)) > 0) {
+        for (i = 0; i < counter; i++) {
+            send(sockets[i], client_message , strlen(client_message), 0);
+        }
+        puts(client_message);
+        client_message[read_size] = '\0';
+    }
     if(read_size == 0) {
         puts("Client disconnected");
         fflush(stdout);
-    } else if(read_size == -1)
+    } else if(read_size == -1) {
         perror("recv failed");
-    free(socket_desc);
+        free(socket_desc);
+    }
     return 0;
 }
