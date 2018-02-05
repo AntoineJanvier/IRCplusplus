@@ -52,11 +52,13 @@ void *connection_handler(void *socket_desc) {
 
     int i;
     while((read_size = recv(sock, client_message, 1024, 0)) > 0) {
+        client_message[read_size+1] = '\0';
         for (i = 0; i < counter; i++) {
             send(sockets[i], client_message , strlen(client_message), 0);
+            send(sockets[i], "\n" , strlen("\n"), 0);
         }
         puts(client_message);
-        client_message[read_size] = '\0';
+        client_message[0] = '\0';
     }
     if(read_size == 0) {
         puts("Client disconnected");

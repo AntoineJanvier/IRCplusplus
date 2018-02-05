@@ -8,17 +8,28 @@
 
 #define BUF_SIZE 1024
 int msock;
+char *musername;
+int needToRePrintCursor;
 
 void * receiveMessage(void * socket) {
     int sockfd, ret;
     char buffer[BUF_SIZE];
     sockfd = msock;
     memset(buffer, 0, BUF_SIZE);
-    for (;;) {
+
+    char *myBan = "";
+    strcpy(myBan, "/ban ");
+    strcat(myBan, musername);
+
+    while (1) {
         ret = (int) recvfrom(sockfd, buffer, BUF_SIZE, 0, NULL, NULL);
-        if (ret < 0) {
+        needToRePrintCursor = 1;
+        if (strcmp(buffer, myBan) == 0) {
+            break;
+        } else if (ret < 0) {
             printf("Error receiving data!\n");
         } else {
+
             fputs(buffer, stdout);
             //printf("\n");
         }
@@ -30,7 +41,7 @@ int main(int argc , char *argv[]) {
     int sock;
     struct sockaddr_in server;
 
-    char username[100], message[1000], final_message[1102], server_reply[2204];
+    char username[100], message[BUF_SIZE], final_message[1102];
 
     char * server_address = "127.0.0.1";
     uint16_t server_port = 8890;
@@ -48,6 +59,7 @@ int main(int argc , char *argv[]) {
 
     printf("Username : ");
     scanf("%s", username);
+    strcpy(musername, username);
 
     if (connect(sock, (struct sockaddr *)&server, sizeof(server)) < 0) {
         perror("connect failed. Error");
@@ -64,14 +76,19 @@ int main(int argc , char *argv[]) {
     }
 
     while(1) {
-        printf("> ");
+        if (needToRePrintCursor == 1) {
+            printf("> ");
+            needToRePrintCursor = 0;
+        }
         scanf("%s", message);
-        if (strcmp(message, (const char *) "exit") == 0) break;
+        if (strcmp(message, (const char *) "/exit") == 0) break;
+
+        // Format : "<User> Hello !"
         strcpy(final_message, "<");
         strcat(final_message, username);
         strcat(final_message, "> ");
         strcat(final_message, message);
-        strcat(final_message, "\0");
+
         if(send(sock, final_message, strlen(final_message), 0) < 0) {
             puts("Send failed");
             return 1;
