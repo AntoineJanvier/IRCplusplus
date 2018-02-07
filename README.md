@@ -1,2 +1,28 @@
 # IRCplusplus
-IRC like in C++, client &amp; server,
+IRC like in C++, client + server
+
+For the C part :
+- Client :
+
+  ```$ gcc -o executable client.c -pthread ```
+  
+  ```$ ./executable ```
+
+- Server :
+
+  ```$ gcc -o executable server.c -lpthread ```
+  
+  ```$ ./executable ```
+
+For the C++ part :
+- Client :
+
+  ```$ g++ client.cpp ```
+  
+  ```$ ./a.out 127.0.0.1 8890 ```
+
+- Server :
+
+  ```$ g++ server.cpp ```
+  
+  ```$ ./a.out 8890```

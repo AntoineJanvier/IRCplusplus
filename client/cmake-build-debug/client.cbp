@@ -84,7 +84,7 @@
 				</MakeCommands>
 			</Target>
 		</Build>
-		<Unit filename="/home/antoine/Projects/IRCplusplus/client/client.c">
+		<Unit filename="/home/antoine/Projects/IRCplusplus/client/client.cpp">
 			<Option target="client"/>
 		</Unit>
 		<Unit filename="/home/antoine/Projects/IRCplusplus/client/client.h">
