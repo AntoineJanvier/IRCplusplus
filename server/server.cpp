@@ -22,14 +22,14 @@ int clients[50];
 int nb_clients = 0;
 
 void *messages_thread(void *ptr) {
-            
-    int i = (int)(size_t) ptr;
+
+    auto i = (int)(size_t) ptr;
     int newClient = clients[i];
     //buffer to send messages with
     char msg[1500];
     char fnl_msg[1505];
 
-    while(1) {
+    while (true) {
 
         // catch client message
         memset(&msg, 0, sizeof(msg)); //clear the buffer
@@ -110,7 +110,7 @@ int main(int argc, char *argv[]) {
         // launch new thread to catch and redistribute client message
         clients[i] = newClient;
         nb_clients++;
-        int res = pthread_create( &t[i], NULL, messages_thread, (void*) i);
+        int res = pthread_create( &t[i], nullptr, messages_thread, (void*) i);
         if (res) {
             std::cout << "Error creating message thread number : " << i;
         }
@@ -118,7 +118,7 @@ int main(int argc, char *argv[]) {
     }
 
     for (int i = 0; i < client_max; ++i) {
-        pthread_join(t[i], NULL);
+        pthread_join(t[i], nullptr);
     }
 
     close(serverSd);

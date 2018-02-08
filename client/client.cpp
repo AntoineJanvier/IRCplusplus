@@ -19,12 +19,11 @@ using namespace std;
 
 void *receive_messages_thread(void *ptr) {
             
-    int clientSd = (int)(size_t) ptr;
+    auto clientSd = (int)(size_t) ptr;
     //buffer to receive messages with
     char msg[1500];
 
-    while(1) {
-
+    while(true) {
         // catch server messages
         memset(&msg, 0, sizeof(msg)); //clear the buffer
         recv(clientSd, (char*)&msg, sizeof(msg), 0);
@@ -48,11 +47,11 @@ int main(int argc, char *argv[]) {
 
     //setup a socket and connection tools
     struct hostent* host = gethostbyname(serverIp);
-    sockaddr_in sendSockAddr;
+    sockaddr_in sendSockAddr{};
     bzero((char*)&sendSockAddr, sizeof(sendSockAddr));
     sendSockAddr.sin_family = AF_INET;
     sendSockAddr.sin_addr.s_addr = inet_addr(inet_ntoa(*(struct in_addr*)*host->h_addr_list));
-    sendSockAddr.sin_port = htons(port);
+    sendSockAddr.sin_port = htons(static_cast<uint16_t>(port));
     int clientSd = socket(AF_INET, SOCK_STREAM, 0);
     //try to connect...
     int status = connect(clientSd, (sockaddr*) &sendSockAddr, sizeof(sendSockAddr));
@@ -62,13 +61,12 @@ int main(int argc, char *argv[]) {
     cout << "Connected to the server!" << endl << endl;
 
     pthread_t receivThread;
-    int res = pthread_create( &receivThread, NULL, receive_messages_thread, (void*) clientSd);
+    int res = pthread_create( &receivThread, nullptr, receive_messages_thread, (void*) clientSd);
     if (res) {
         std::cout << "Error creating receive message thread";
     }
     char msg[1500];
-    while(1) {
-
+    while(true) {
         string data;
         getline(cin, data);
         memset(&msg, 0, sizeof(msg)); //clear the buffer
