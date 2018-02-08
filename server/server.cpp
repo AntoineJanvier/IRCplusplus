@@ -14,111 +14,115 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <fstream>
-#include <thread>
-#include <vector>
+#include <pthread.h>
 using namespace std;
 
-int port;
+int client_max = 50;
+int clients[50];
+int nb_clients = 0;
 
-void initServer() {
-
-    //setup a socket and connection tools
-    sockaddr_in servAddr;
-    bzero((char*)&servAddr, sizeof(servAddr));
-    servAddr.sin_family = AF_INET;
-    servAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    servAddr.sin_port = htons(port++);
-
-    //open stream oriented socket with internet address
-    //also keep track of the socket descriptor
-    int serverSd = socket(AF_INET, SOCK_STREAM, 0);
-    if(serverSd < 0) {
-        cerr << "Error establishing the server socket" << endl;
-        exit(0);
-    }
-    //bind the socket to its local address
-    int bindStatus = bind(serverSd, (struct sockaddr*) &servAddr, sizeof(servAddr));
-    if(bindStatus < 0) {
-        cerr << "Error binding socket to local address" << endl;
-        exit(0);
-    }
-    cout << "Waiting for a client to connect on port " << port - 1 << endl;
-    //listen for up to 10 requests at a time
-    listen(serverSd, 10);
-
-    //buffer to send and receive messages with
+void *messages_thread(void *ptr) {
+            
+    int i = (int)(size_t) ptr;
+    int newClient = clients[i];
+    //buffer to send messages with
     char msg[1500];
-    //receive a request from client using accept
-    //we need a new address to connect with the client
-    sockaddr_in newSockAddr;
-    socklen_t newSockAddrSize = sizeof(newSockAddr);
-    //accept, create a new socket descriptor to 
-    //handle the new connection with client
-    int newSd = accept(serverSd, (sockaddr *)&newSockAddr, &newSockAddrSize);
-    if(newSd < 0) {
-        cerr << "Error accepting request from client!" << endl;
-        exit(1);
-    }
-    cout << "Connected with client! - " << newSd << endl;
-    //lets keep track of the session time
-    struct timeval start1, end1;
-    gettimeofday(&start1, NULL);
-    //also keep track of the amount of data sent as well
-    int bytesRead, bytesWritten = 0;
+    char fnl_msg[1505];
+
     while(1) {
-        //receive a message from the client (listen)
-        //cout << "Awaiting client response..." << endl;
-        memset(&msg, 0, sizeof(msg));//clear the buffer
-        bytesRead += recv(newSd, (char*)&msg, sizeof(msg), 0);
-        if(!strcmp(msg, "/exit")) {
-            cout << "Client has quit the session" << endl;
-            break;
-        }
-        cout << "Client: " << msg << endl;
-        /*cout << ">";
-        string data;
-        getline(cin, data);
+
+        // catch client message
         memset(&msg, 0, sizeof(msg)); //clear the buffer
-        strcpy(msg, data.c_str());
-        if(data == "exit") {
-            //send to the client that server has closed the connection
-            send(newSd, (char*)&msg, strlen(msg), 0);
+        recv(newClient, (char*)&msg, sizeof(msg), 0);
+        if(!strcmp(msg, "/exit")) {
+            cout << "A client has quit the session" << endl;
+            close(newClient);
             break;
         }
-        //send the message to client
-        bytesWritten += send(newSd, (char*)&msg, strlen(msg), 0);*/
+        cout << msg << endl;
+
+        memset(&fnl_msg, 0, sizeof(fnl_msg)); //clear the buffer
+        strcpy(fnl_msg , "\n");
+        strcat(fnl_msg , msg);
+        strcat(fnl_msg , "\n\n");
+
+        // redirstribute message to all other clients
+        for (int j = 0; j < nb_clients; j++) {
+            if (clients[j] != newClient) {
+                send(clients[j], (char*)&fnl_msg, strlen(fnl_msg), 0);
+            }
+        }
+
     }
-    //we need to close the socket descriptors after we're all done
-    gettimeofday(&end1, NULL);
-    close(newSd);
-    close(serverSd);
-    cout << "********Session********" << endl;
-    cout << "Bytes written: " << bytesWritten << " Bytes read: " << bytesRead << endl;
-    cout << "Elapsed time: " << (end1.tv_sec - start1.tv_sec) << " secs" << endl;
-    cout << "Connection closed..." << endl;
 
 }
 
 int main(int argc, char *argv[]) {
-    
+
     //for the server, we only need to specify a port number
     if (argc != 2) {
         cerr << "Usage: port" << endl;
         exit(0);
     }
     //grab the port number
-    port = atoi(argv[1]);
+    int port = atoi(argv[1]);
 
-    std::vector<std::thread> threads;
+    //setup a socket and connection tools
+    sockaddr_in servAddr;
+    bzero((char*)&servAddr, sizeof(servAddr));
+    servAddr.sin_family = AF_INET;
+    servAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    servAddr.sin_port = htons(port);
 
-    //thread for the 10 client to connect
-    for (int i = 0; i < 10; i++) {
-        std::thread t(initServer);
-        threads.push_back(std::move(t));
+    //open stream oriented socket with internet address
+    //also keep track of the socket descriptor
+    int serverSd = socket(AF_INET, SOCK_STREAM, 0);
+    if(serverSd < 0)
+    {
+        cerr << "Error establishing the server socket" << endl;
+        exit(0);
+    }
+    //bind the socket to its local address
+    int bindStatus = bind(serverSd, (struct sockaddr*) &servAddr, sizeof(servAddr));
+    if(bindStatus < 0)
+    {
+        cerr << "Error binding socket to local address" << endl;
+        exit(0);
+    }
+    cout << "Waiting for a client to connect..." << endl;
+    // listen for up to client_max requests at a time
+    listen(serverSd, client_max);
+    pthread_t t[client_max];
+
+    for (int i = 0; i < client_max; i++) {
+
+        // wait for a client to accept socker connection
+        sockaddr_in from = { 0 };
+        socklen_t addrlen = sizeof(servAddr);
+        int newClient = accept(serverSd, (sockaddr *)&from, &addrlen);
+        if (newClient >= 0) {
+            char buff[INET6_ADDRSTRLEN] = { 0 };
+            std::string clientAddress = inet_ntop(servAddr.sin_family, (void*)&(servAddr.sin_addr), buff, INET6_ADDRSTRLEN);
+            std::cout << "Connection of " << clientAddress << ":" << servAddr.sin_port << std::endl;
+        } else
+            break;
+
+        // launch new thread to catch and redistribute client message
+        clients[i] = newClient;
+        nb_clients++;
+        int res = pthread_create( &t[i], NULL, messages_thread, (void*) i);
+        if (res) {
+            std::cout << "Error creating message thread number : " << i;
+        }
+
     }
 
-    for (auto& t : threads) t.join();
+    for (int i = 0; i < client_max; ++i) {
+        pthread_join(t[i], NULL);
+    }
+
+    close(serverSd);
+    cout << "Connection closed..." << endl;
 
     return 0;
-    
 }

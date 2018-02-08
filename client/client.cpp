@@ -14,18 +14,38 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <fstream>
+#include <pthread.h>
 using namespace std;
-//Client side
-int main(int argc, char *argv[])
-{
+
+void *receive_messages_thread(void *ptr) {
+            
+    int clientSd = (int)(size_t) ptr;
+    //buffer to receive messages with
+    char msg[1500];
+
+    while(1) {
+
+        // catch server messages
+        memset(&msg, 0, sizeof(msg)); //clear the buffer
+        recv(clientSd, (char*)&msg, sizeof(msg), 0);
+        cout << msg;
+
+    }
+
+}
+
+int main(int argc, char *argv[]) {
+
     //we need 2 things: ip address and port number, in that order
-    if(argc != 3)
-    {
+    if(argc != 3) {
         cerr << "Usage: ip_address port" << endl; exit(0);
     } //grab the IP address and port number
     char *serverIp = argv[1]; int port = atoi(argv[2]);
-    //create a message buffer
-    char msg[1500];
+    
+    string username;
+    cout << "Username : ";
+    getline(cin, username);
+
     //setup a socket and connection tools
     struct hostent* host = gethostbyname(serverIp);
     sockaddr_in sendSockAddr;
@@ -39,35 +59,31 @@ int main(int argc, char *argv[])
     if(status < 0) {
         cout<<"Error connecting to socket!"<<endl;
     }
-    cout << "Connected to the server! - " << clientSd << endl;
-    int bytesRead, bytesWritten = 0;
-    struct timeval start1, end1;
-    gettimeofday(&start1, NULL);
+    cout << "Connected to the server!" << endl << endl;
+
+    pthread_t receivThread;
+    int res = pthread_create( &receivThread, NULL, receive_messages_thread, (void*) clientSd);
+    if (res) {
+        std::cout << "Error creating receive message thread";
+    }
+    char msg[1500];
     while(1) {
-        cout << ">";
+
         string data;
         getline(cin, data);
-        memset(&msg, 0, sizeof(msg));//clear the buffer
-        strcpy(msg, data.c_str());
+        memset(&msg, 0, sizeof(msg)); //clear the buffer
+        strcpy(msg, username.c_str());
+        strcat(msg, " : ");
+        strcat(msg, data.c_str());
         if(data == "/exit") {
             send(clientSd, (char*)&msg, strlen(msg), 0);
             break;
         }
-        bytesWritten += send(clientSd, (char*)&msg, strlen(msg), 0);
-        cout << "Awaiting server response..." << endl;
-        memset(&msg, 0, sizeof(msg));//clear the buffer
-        bytesRead += recv(clientSd, (char*)&msg, sizeof(msg), 0);
-        if(!strcmp(msg, "exit")) {
-            cout << "Server has quit the session" << endl;
-            break;
-        }
-        cout << "Server: " << msg << endl;
+        send(clientSd, (char*)&msg, strlen(msg), 0);
+
     }
-    gettimeofday(&end1, NULL);
-    close(clientSd);
-    cout << "********Session********" << endl;
-    cout << "Bytes written: " << bytesWritten << " Bytes read: " << bytesRead << endl;
-    cout << "Elapsed time: " << (end1.tv_sec- start1.tv_sec) << " secs" << endl;
     cout << "Connection closed" << endl;
+    
     return 0;
+
 }

@@ -11,6 +11,7 @@
         "typeinfo": "cpp",
         "__split_buffer": "cpp",
         "string": "cpp",
-        "vector": "cpp"
+        "vector": "cpp",
+        "system_error": "cpp"
     }
 }
