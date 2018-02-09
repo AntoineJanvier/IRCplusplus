@@ -34,7 +34,7 @@ void *messages_thread(void *ptr) {
         // catch client message
         memset(&msg, 0, sizeof(msg)); //clear the buffer
         recv(newClient, (char*)&msg, sizeof(msg), 0);
-        if(!strcmp(msg, "/exit")) {
+        if(msg == "/exit") {
             cout << "A client has quit the session" << endl;
             close(newClient);
             break;

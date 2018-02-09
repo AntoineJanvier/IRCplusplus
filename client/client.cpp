@@ -15,6 +15,9 @@
 #include <fcntl.h>
 #include <fstream>
 #include <pthread.h>
+
+#include "src/User.hpp"
+
 using namespace std;
 
 void *receive_messages_thread(void *ptr) {
@@ -45,6 +48,8 @@ int main(int argc, char *argv[]) {
     cout << "Username : ";
     getline(cin, username);
 
+    User *uClient = new User(username);
+
     //setup a socket and connection tools
     struct hostent* host = gethostbyname(serverIp);
     sockaddr_in sendSockAddr{};
@@ -70,11 +75,12 @@ int main(int argc, char *argv[]) {
         string data;
         getline(cin, data);
         memset(&msg, 0, sizeof(msg)); //clear the buffer
-        strcpy(msg, username.c_str());
+        strcpy(msg, uClient->getUsername().c_str());
         strcat(msg, " : ");
         strcat(msg, data.c_str());
         if(data == "/exit") {
             send(clientSd, (char*)&msg, strlen(msg), 0);
+            close(clientSd);
             break;
         }
         send(clientSd, (char*)&msg, strlen(msg), 0);

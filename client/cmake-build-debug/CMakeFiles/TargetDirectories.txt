@@ -1,3 +1,0 @@
-/home/antoine/Projects/IRCplusplus/client/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/home/antoine/Projects/IRCplusplus/client/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/antoine/Projects/IRCplusplus/client/cmake-build-debug/CMakeFiles/client.dir
