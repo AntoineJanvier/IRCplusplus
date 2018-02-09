@@ -17,12 +17,12 @@ For the C part :
 For the C++ part :
 - Client :
 
-  ```$ g++ client.cpp ```
+  ```$ g++ client.cpp src/User.cpp -pthread ```
   
   ```$ ./a.out 127.0.0.1 8890 ```
 
 - Server :
 
-  ```$ g++ server.cpp ```
+  ```$ g++ server.cpp -lpthread ```
   
   ```$ ./a.out 8890```
