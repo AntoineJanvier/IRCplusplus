@@ -26,3 +26,10 @@ For the C++ part :
   ```$ g++ server.cpp -lpthread ```
   
   ```$ ./a.out 8890```
+
+- Quick :
+
+  ```$ g++ server.cpp -lpthread && clear && ./a.out 8890 ```
+
+  ```$ g++ client.cpp src/User.cpp -pthread && clear && ./a.out 127.0.0.1 8890 ```
+
